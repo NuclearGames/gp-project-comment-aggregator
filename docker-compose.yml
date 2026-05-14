@@ -1,0 +1,78 @@
+name: review-bot
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    expose:
+      - "11434"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    # Uncomment for GPU acceleration:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    command: ollama pull ${OLLAMA_MODEL:-llama3.2}
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+
+  worker:
+    build: ./worker
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_started
+      ollama:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    restart: "no"
+    volumes:
+      - ./secrets:/secrets:ro
+
+  bot:
+    build: ./bot
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_started
+      ollama:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    volumes:
+      - ./secrets:/secrets:ro
+
+  scheduler:
+    build: ./scheduler
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  ollama_data:
+  redis_data:
