@@ -75,4 +75,4 @@ def analyze_reviews(reviews: list[dict]) -> list[dict]:
             logger.warning("Ollama chat failed (attempt %s/%s): %s", attempt, MAX_RETRIES, exc)
             time.sleep(5)
 
-    raise RuntimeError(f"Ollama analysis failed after retries: {last_error}") from last_error
+    raise RuntimeError(f"Ollama analysis failed after {MAX_RETRIES} retries: {last_error}") from last_error
