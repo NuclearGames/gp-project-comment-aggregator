@@ -70,3 +70,4 @@ Redis key model:
 - `digest:{YYYY-MM-DD}` → JSON topic list
 - `topics:{YYYY-MM-DD}` → ordered Redis list of topic names
 - `reviews:{YYYY-MM-DD}:{topic_slug}` → Redis list of JSON-encoded reviews
+- All digest/topic/review keys are stored with a 30-day TTL (`2,592,000` seconds)

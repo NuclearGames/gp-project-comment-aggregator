@@ -37,7 +37,7 @@ def _parse_json_safe(raw: str) -> list:
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError as e:
-        logging.error("Failed to parse Ollama response: %s\nRaw: %s", e, raw)
+        logger.error("Failed to parse Ollama response: %s\nRaw: %s", e, raw)
         raise ValueError(f"Ollama returned non-JSON output: {e}") from e
 
 

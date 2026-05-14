@@ -1,4 +1,5 @@
 import json
+import os
 
 import redis
 
@@ -6,7 +7,7 @@ TTL_SECONDS = 2_592_000
 
 
 def get_redis_client() -> redis.Redis:
-    return redis.Redis.from_url(__import__("os").environ["REDIS_URL"])
+    return redis.Redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
 
 
 def _topic_slug(topic_name: str) -> str:
