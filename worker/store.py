@@ -3,7 +3,7 @@ import os
 
 import redis
 
-TTL_SECONDS = 2_592_000
+TTL_SECONDS = 2_592_000  # 30 days in seconds
 
 
 def get_redis_client() -> redis.Redis:

@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 client = ollama.Client(host=os.environ["OLLAMA_HOST"])
 MODEL = os.environ["OLLAMA_MODEL"]
+MAX_RETRIES = 3
 
 SYSTEM_PROMPT = """You are an analyst for a mobile game. You receive a list of user reviews.
 Your task is to group them into complaint topics.
@@ -49,7 +50,7 @@ def analyze_reviews(reviews: list[dict]) -> list[dict]:
     user_message = "\n".join(numbered_reviews)
 
     last_error: Exception | None = None
-    for attempt in range(1, 4):
+    for attempt in range(1, MAX_RETRIES + 1):
         try:
             response = client.chat(
                 model=MODEL,
@@ -69,9 +70,9 @@ def analyze_reviews(reviews: list[dict]) -> list[dict]:
             raise
         except (ollama.ResponseError, Exception) as exc:
             last_error = exc
-            if attempt == 3:
+            if attempt == MAX_RETRIES:
                 break
-            logger.warning("Ollama chat failed (attempt %s/3): %s", attempt, exc)
+            logger.warning("Ollama chat failed (attempt %s/%s): %s", attempt, MAX_RETRIES, exc)
             time.sleep(5)
 
     raise RuntimeError(f"Ollama analysis failed after retries: {last_error}") from last_error
