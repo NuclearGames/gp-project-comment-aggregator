@@ -20,7 +20,7 @@ def _decode(value):
     return value
 
 
-def save_digest(r, date_str: str, topics: list[dict], reviews: list[dict]) -> None:
+def save_digest(r: redis.Redis, date_str: str, topics: list[dict], reviews: list[dict]) -> None:
     digest_key = f"digest:{date_str}"
     topics_key = f"topics:{date_str}"
 
@@ -60,19 +60,21 @@ def save_digest(r, date_str: str, topics: list[dict], reviews: list[dict]) -> No
         r.expire(topic_reviews_key, TTL_SECONDS)
 
 
-def get_digest(r, date_str: str) -> list[dict] | None:
+def get_digest(r: redis.Redis, date_str: str) -> list[dict] | None:
     value = r.get(f"digest:{date_str}")
     if value is None:
         return None
     return json.loads(_decode(value))
 
 
-def get_reviews_for_topic(r, date_str: str, topic_name: str, start: int, end: int) -> list[str]:
+def get_reviews_for_topic(
+    r: redis.Redis, date_str: str, topic_name: str, start: int, end: int
+) -> list[str]:
     key = f"reviews:{date_str}:{_topic_slug(topic_name)}"
     values = r.lrange(key, start - 1, end - 1)
     return [_decode(v) for v in values]
 
 
-def list_topics(r, date_str: str) -> list[str]:
+def list_topics(r: redis.Redis, date_str: str) -> list[str]:
     values = r.lrange(f"topics:{date_str}", 0, -1)
     return [_decode(v) for v in values]

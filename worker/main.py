@@ -3,12 +3,11 @@ import os
 import sys
 from datetime import datetime, timezone
 
-import redis
 import requests
 
 from analyze import analyze_reviews
 from fetch_reviews import fetch_recent_reviews
-from store import save_digest
+from store import get_redis_client, save_digest
 
 logging.basicConfig(
     level=logging.INFO,
@@ -63,7 +62,7 @@ def main() -> int:
             send_telegram_message("⚠️ Review analysis failed today — could not parse model output.")
             return 1
 
-        r = redis.Redis.from_url(os.environ["REDIS_URL"])
+        r = get_redis_client()
         save_digest(r, date_str, topics, reviews)
 
         digest_message = build_digest_text(package_name, date_str, len(reviews), topics)

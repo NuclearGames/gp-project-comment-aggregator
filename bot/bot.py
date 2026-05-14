@@ -53,7 +53,7 @@ def build_digest_text(package_name: str, date_str: str, total_count: int, topics
 
 async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
-        del context
+        _ = context
         await update.message.reply_text(
             f"👋 Hi! I send daily review digests for {PACKAGE_NAME}.\n\n"
             "Commands:\n"
@@ -68,7 +68,7 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 async def digest_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
-        del context
+        _ = context
         date_str = datetime.now(timezone.utc).date().isoformat()
         r = _redis_client()
         digest = get_digest(r, date_str)
@@ -85,7 +85,7 @@ async def digest_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def topic_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
-        del context
+        _ = context
         text = update.message.text or ""
         match = re.match(r"^/topic(?:@\w+)?\s+(.+?)\s+(\d+)-(\d+)\s*$", text)
         if not match:
