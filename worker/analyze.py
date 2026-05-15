@@ -34,6 +34,17 @@ Rules:
 
 
 def _parse_json_safe(raw: str) -> list:
+    """Parse JSON from the model output and raise on invalid JSON.
+
+    Args:
+        raw: Raw response string from the model.
+
+    Returns:
+        Parsed JSON value, expected to be a list.
+
+    Raises:
+        ValueError: If the response is not valid JSON.
+    """
     cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw.strip(), flags=re.MULTILINE)
     try:
         return json.loads(cleaned)
@@ -43,10 +54,25 @@ def _parse_json_safe(raw: str) -> list:
 
 
 def analyze_reviews(reviews: list[dict]) -> list[dict]:
+    """Analyze reviews and group complaints into topic buckets.
+
+    Args:
+        reviews: List of review dictionaries with text fields.
+
+    Returns:
+        List of topic dictionaries with counts and review indices.
+
+    Raises:
+        RuntimeError: If analysis fails after retries.
+        ValueError: If the model returns invalid JSON.
+    """
     if not reviews:
         return []
 
-    numbered_reviews = [f"{idx}. {review.get('text', '')}" for idx, review in enumerate(reviews, start=1)]
+    numbered_reviews = [
+        f"{idx}. {review.get('text', '')}"
+        for idx, review in enumerate(reviews, start=1)
+    ]
     user_message = "\n".join(numbered_reviews)
 
     last_error: Exception | None = None
@@ -72,7 +98,11 @@ def analyze_reviews(reviews: list[dict]) -> list[dict]:
             last_error = exc
             if attempt == MAX_RETRIES:
                 break
-            logger.warning("Ollama chat failed (attempt %s/%s): %s", attempt, MAX_RETRIES, exc)
+            logger.warning(
+                "Ollama chat failed (attempt %s/%s): %s", attempt, MAX_RETRIES, exc
+            )
             time.sleep(5)
 
-    raise RuntimeError(f"Ollama analysis failed after {MAX_RETRIES} retries: {last_error}") from last_error
+    raise RuntimeError(
+        f"Ollama analysis failed after {MAX_RETRIES} retries: {last_error}"
+    ) from last_error

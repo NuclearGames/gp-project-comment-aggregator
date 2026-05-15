@@ -13,14 +13,14 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
-    # Uncomment for GPU acceleration:
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
+    #Uncomment for GPU acceleration:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   ollama-init:
     image: ollama/ollama:latest
