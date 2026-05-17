@@ -60,6 +60,8 @@ def _normalize_topics(payload: list | dict) -> list:
     if isinstance(payload, list):
         return payload
     if isinstance(payload, dict):
+        if {"topic", "count", "review_indices"}.issubset(payload.keys()):
+            return [payload]
         for key in ("topics", "results", "items", "data"):
             value = payload.get(key)
             if isinstance(value, list):
