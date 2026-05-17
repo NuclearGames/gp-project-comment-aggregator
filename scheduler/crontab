@@ -1,1 +1,1 @@
-0 8 * * * docker start $(docker ps -aq -f name=review-bot-worker-1) 2>&1
+0 0 * * * docker start $(docker ps -aq -f name=review-bot-worker-1) 2>&1

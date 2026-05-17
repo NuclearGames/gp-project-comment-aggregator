@@ -5,22 +5,22 @@ services:
     image: ollama/ollama:latest
     volumes:
       - ollama_data:/root/.ollama
-    expose:
-      - "11434"
+    ports:
+      - "11545:11434"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test: ["CMD", "ollama", "list"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 60s
-    # Uncomment for GPU acceleration:
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
+    #Uncomment for GPU acceleration:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   ollama-init:
     image: ollama/ollama:latest
@@ -30,7 +30,7 @@ services:
     restart: "no"
     environment:
       OLLAMA_HOST: http://ollama:11434
-    command: ollama pull ${OLLAMA_MODEL:-llama3.2}
+    command: ["pull", "${OLLAMA_MODEL:-llama3.2}"]
 
   redis:
     image: redis:7-alpine
@@ -38,7 +38,9 @@ services:
       - redis_data:/data
 
   worker:
-    build: ./worker
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
     env_file:
       - .env
     depends_on:
@@ -53,7 +55,9 @@ services:
       - ./secrets:/secrets:ro
 
   bot:
-    build: ./bot
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
     env_file:
       - .env
     depends_on:

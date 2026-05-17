@@ -4,10 +4,12 @@ import sys
 from datetime import datetime, timezone
 
 import requests
-
 from analyze import analyze_reviews
 from fetch_reviews import fetch_recent_reviews
-from store import get_redis_client, save_digest
+from store import save_digest
+
+from shared.digest import build_digest_text
+from shared.redis_store import get_redis_client
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,38 +18,45 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def build_digest_text(package_name: str, date_str: str, total_count: int, topics: list[dict]) -> str:
-    lines = [
-        f"📊 Daily review digest — {package_name}",
-        f"Date: {date_str}  |  Reviews analysed: {total_count}",
-        "",
-        f"{len(topics)} complaint topics found:",
-        "",
-    ]
-
-    for index, topic in enumerate(topics, start=1):
-        lines.append(f"{index}. {topic.get('topic', 'Unknown Topic')} — {topic.get('count', 0)} reviews")
-
-    lines.extend(["", 'Reply /topic "<TopicName>" 1-10 to read reviews.'])
-    return "\n".join(lines)
-
-
 def send_telegram_message(text: str) -> None:
+    """Send a text message to the configured Telegram chat.
+
+    Args:
+        text: Message body to send.
+
+    Returns:
+        None.
+
+    Raises:
+        requests.HTTPError: If Telegram returns a non-OK response.
+    """
     token = os.environ["TELEGRAM_BOT_TOKEN"]
     chat_id = os.environ["TELEGRAM_CHAT_ID"]
     response = requests.post(
         f"https://api.telegram.org/bot{token}/sendMessage",
-        json={"chat_id": chat_id, "text": text, "parse_mode": None},
+        json={"chat_id": chat_id, "text": text},
         timeout=30,
     )
     if response.ok:
         logger.info("Digest message sent successfully to Telegram")
     else:
-        logger.error("Telegram send failed: status=%s body=%s", response.status_code, response.text)
+        logger.error(
+            "Telegram send failed: status=%s body=%s",
+            response.status_code,
+            response.text,
+        )
         response.raise_for_status()
 
 
 def main() -> int:
+    """Run the worker job to fetch, analyze, store, and notify.
+
+    Args:
+        None.
+
+    Returns:
+        Process exit code: 0 on success, 1 on failure.
+    """
     try:
         package_name = os.environ["PACKAGE_NAME"]
         date_str = datetime.now(timezone.utc).date().isoformat()
@@ -59,7 +68,9 @@ def main() -> int:
             topics = analyze_reviews(reviews)
         except ValueError:
             logger.exception("Review analysis failed due to invalid JSON output")
-            send_telegram_message("⚠️ Review analysis failed today — could not parse model output.")
+            send_telegram_message(
+                "⚠️ Review analysis failed today — could not parse model output."
+            )
             return 1
 
         r = get_redis_client()
