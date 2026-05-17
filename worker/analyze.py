@@ -12,7 +12,7 @@ client = ollama.Client(host=os.environ["OLLAMA_HOST"])
 MODEL = os.environ["OLLAMA_MODEL"]
 MAX_RETRIES = 3
 
-SYSTEM_PROMPT = """You are an analyst for a mobile game. You receive a list of user reviews.
+DEFAULT_SYSTEM_PROMPT = """You are an analyst for a mobile game. You receive a list of user reviews.
 Your task is to group them into complaint topics.
 
 Rules:
@@ -31,6 +31,8 @@ Rules:
     }
   ]
   If there are no complaints at all, return an empty JSON array: []"""
+
+SYSTEM_PROMPT = os.environ.get("SYSTEM_PROMPT", DEFAULT_SYSTEM_PROMPT)
 
 
 def _parse_json_safe(raw: str) -> list:
