@@ -1,4 +1,5 @@
 import json
+import os
 
 import redis
 
@@ -7,7 +8,8 @@ from shared.redis_store import (
     topic_slug,
 )
 
-TTL_SECONDS = 2_592_000  # 30 days in seconds
+DEFAULT_TTL_SECONDS = 2_592_000  # 30 days in seconds
+TTL_SECONDS = int(os.environ.get("REDIS_TTL_SECONDS", DEFAULT_TTL_SECONDS))
 
 
 def save_digest(

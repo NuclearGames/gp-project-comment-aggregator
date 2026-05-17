@@ -6,9 +6,10 @@ from datetime import datetime, timezone
 import requests
 from analyze import analyze_reviews
 from fetch_reviews import fetch_recent_reviews
-from store import get_redis_client, save_digest
+from store import save_digest
 
 from shared.digest import build_digest_text
+from shared.redis_store import get_redis_client
 
 logging.basicConfig(
     level=logging.INFO,
@@ -33,7 +34,7 @@ def send_telegram_message(text: str) -> None:
     chat_id = os.environ["TELEGRAM_CHAT_ID"]
     response = requests.post(
         f"https://api.telegram.org/bot{token}/sendMessage",
-        json={"chat_id": chat_id, "text": text, "parse_mode": None},
+        json={"chat_id": chat_id, "text": text},
         timeout=30,
     )
     if response.ok:
