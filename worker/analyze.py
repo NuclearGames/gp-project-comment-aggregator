@@ -81,6 +81,15 @@ def _analyze_batch(reviews: list[dict], index_offset: int) -> list[dict]:
     last_error: Exception | None = None
     for attempt in range(1, MAX_RETRIES + 1):
         try:
+
+            logger.info(
+                "Sending batch of %s reviews to Ollama (attempt %s/%s)",
+                len(reviews),
+                attempt,
+                MAX_RETRIES,
+            )
+            logger.info("User message to Ollama:\n%s", user_message)
+
             response = client.chat(
                 model=MODEL,
                 messages=[
