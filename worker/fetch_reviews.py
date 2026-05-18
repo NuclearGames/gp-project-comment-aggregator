@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from translator import GoogleTranslator
 
 logger = logging.getLogger(__name__)
 SCOPE = "https://www.googleapis.com/auth/androidpublisher"
@@ -57,6 +58,7 @@ def fetch_recent_reviews() -> list[dict]:
 
     results: list[dict] = []
     page_token = None
+    translator = GoogleTranslator()
 
     while True:
         try:
@@ -65,6 +67,15 @@ def fetch_recent_reviews() -> list[dict]:
                 .list(packageName=package_name, token=page_token)
                 .execute()
             )
+
+            logger.info(
+                "Fetched %d reviews from Google Play (page token: %s)",
+                len(response.get("reviews", [])),
+                page_token,
+            )
+
+            logger.info("Response: %s", json.dumps(response, indent=2))
+
             for review in response.get("reviews", []):
                 user_comment = _extract_user_comment(review.get("comments", []))
                 if not user_comment:
@@ -76,13 +87,19 @@ def fetch_recent_reviews() -> list[dict]:
                 if last_modified_seconds < cutoff_seconds:
                     continue
 
+                rating = int(user_comment.get("starRating", 0))
+                if rating < 1 or rating > 3:
+                    continue
+
                 text = user_comment.get("text", "")
+                language = user_comment.get("reviewerLanguage", "")
+                translated_text = translator.translate(text, language)
                 results.append(
                     {
                         "review_id": review.get("reviewId", ""),
                         "author": review.get("authorName", "Unknown"),
-                        "rating": int(user_comment.get("starRating", 0)),
-                        "text": text,
+                        "rating": rating,
+                        "text": translated_text,
                         "date": datetime.fromtimestamp(
                             last_modified_seconds, tz=timezone.utc
                         )

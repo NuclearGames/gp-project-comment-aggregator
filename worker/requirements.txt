@@ -1,5 +1,6 @@
 google-api-python-client==2.*
 google-auth==2.*
+google-cloud-translate==3.*
 ollama==0.*
 redis==5.*
 requests==2.*
