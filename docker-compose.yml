@@ -3,6 +3,7 @@ name: review-bot
 services:
   ollama:
     image: ollama/ollama:latest
+    gpus: all
     volumes:
       - ollama_data:/root/.ollama
     ports:
@@ -13,17 +14,18 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
-    #Uncomment for GPU acceleration:
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    # #Uncomment for GPU acceleration:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
 
   ollama-init:
     image: ollama/ollama:latest
+    gpus: all
     depends_on:
       ollama:
         condition: service_healthy

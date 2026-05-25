@@ -74,7 +74,7 @@ def fetch_recent_reviews() -> list[dict]:
                 page_token,
             )
 
-            logger.info("Response: %s", json.dumps(response, indent=2))
+            # logger.info("Response: %s", json.dumps(response, indent=2))
 
             for review in response.get("reviews", []):
                 user_comment = _extract_user_comment(review.get("comments", []))
@@ -89,6 +89,12 @@ def fetch_recent_reviews() -> list[dict]:
 
                 rating = int(user_comment.get("starRating", 0))
                 if rating < 1 or rating > 3:
+                    logger.info(
+                        "Skipping review with rating %d (not a complaint): %s",
+                        rating,
+                        user_comment.get("text", ""),
+                    )
+
                     continue
 
                 text = user_comment.get("text", "")
